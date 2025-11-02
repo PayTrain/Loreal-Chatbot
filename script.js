@@ -37,7 +37,10 @@ function renderChat() {
 
   chatHistory.forEach((msg, idx) => {
     const wrapper = document.createElement("div");
-    wrapper.className = `chat-message ${msg.role}`;
+    // mark the seeded greeting as an initial special message so we can style it
+    wrapper.className = `chat-message ${msg.role}${
+      msg.initial ? " initial" : ""
+    }`;
     const author = msg.role === "user" ? "You" : "Advisor";
 
     // Hide the meta for the very first assistant message if no user message has appeared yet.
@@ -122,7 +125,7 @@ chatForm.addEventListener("submit", async (e) => {
   const text = userInput.value.trim();
   if (!text) return;
 
-  // Remove the seeded initial assistant greeting (if present) so it 
+  // Remove the seeded initial assistant greeting (if present) so it
   // disappears once the user's message appears in the chat window.
   chatHistory = chatHistory.filter(
     (m) => !(m.role === "assistant" && m.initial === true)

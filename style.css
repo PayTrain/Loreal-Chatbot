@@ -38,7 +38,7 @@ body {
 .chat-window {
   height: 360px;
   border: 1px solid #000;
-  padding: 20px;
+  padding: 2rem 2rem 1.5rem 2rem;
   font-size: 18px;
   line-height: 1.5;
   overflow-y: auto;
@@ -48,7 +48,9 @@ body {
 
 /* chat message layout */
 .chat-message {
-  margin-bottom: 14px;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
 }
 
 .chat-message .message-meta {
@@ -61,6 +63,47 @@ body {
   /* ensure tight layout around text */
   margin: 0;
   padding: 0;
+}
+
+/* alignment and bubble styles */
+.chat-message.assistant {
+  align-items: flex-start; /* left aligned */
+}
+
+.chat-message.user {
+  align-items: flex-end; /* right aligned */
+}
+
+.chat-message .message-body {
+  max-width: 75%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  word-wrap: break-word;
+}
+
+.chat-message.assistant .message-body {
+  background: #ffffff;
+  color: #222;
+  border: 1px solid #e6e6e6;
+}
+
+.chat-message.user .message-body {
+  background: #111827;
+  color: #fff;
+}
+
+/* initial greeting: full-width, no visible box, left-aligned text */
+.chat-message.initial {
+  align-items: stretch; /* allow full width */
+}
+
+.chat-message.initial .message-body {
+  max-width: 100%;
+  padding: 0; /* no inner box padding */
+  background: transparent;
+  border: none;
+  color: #222;
+  border-radius: 0;
 }
 
 /* messages */
