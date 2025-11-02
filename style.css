@@ -8,7 +8,8 @@
 /* —— body + fonts —— */
 body {
   font-family: "Montserrat", Arial, Helvetica, sans-serif;
-  color: #333;
+  color: #000000;
+  background: #ffffff;
   display: flex;
   justify-content: center;
 }
@@ -42,7 +43,7 @@ body {
   font-size: 18px;
   line-height: 1.5;
   overflow-y: auto;
-  background: #fafafa;
+  background: #ffffff;
   white-space: pre-line;
 }
 
@@ -55,7 +56,7 @@ body {
 
 .chat-message .message-meta {
   margin-bottom: 6px;
-  color: #666;
+  color: #666666;
   font-size: 14px;
 }
 
@@ -83,13 +84,13 @@ body {
 
 .chat-message.assistant .message-body {
   background: #ffffff;
-  color: #222;
+  color: #000000;
   border: 1px solid #e6e6e6;
 }
 
 .chat-message.user .message-body {
-  background: #111827;
-  color: #fff;
+  background: #000000;
+  color: #ffffff;
 }
 
 /* initial greeting: full-width, no visible box, left-aligned text */
@@ -102,7 +103,7 @@ body {
   padding: 0; /* no inner box padding */
   background: transparent;
   border: none;
-  color: #222;
+  color: #000000;
   border-radius: 0;
 }
 
@@ -135,14 +136,14 @@ body {
 }
 
 .chat-form input:focus {
-  outline: 2px solid #000;
+  outline: 2px solid #e3a535;
   outline-offset: 2px;
 }
 
 .chat-form button {
   font-size: 18px;
-  background: #000;
-  color: #fff;
+  background: #e3a535;
+  color: #ffffff;
   border: none;
   padding: 12px;
   width: 48px;
@@ -159,11 +160,13 @@ body {
 }
 
 .chat-form button:hover {
-  background: #666666;
+  background: #ffffff;
+  color: #e3a535;
+  border: 1px solid #e3a535;
 }
 
 .chat-form button:focus {
-  outline: 2px solid #000;
+  outline: 2px solid #e3a535;
   outline-offset: 2px;
 }
 
@@ -199,5 +202,5 @@ body {
 }
 
 .site-footer a:hover {
-  color: #666666;
+  color: #ff003b;
 }
