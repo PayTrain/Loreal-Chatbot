@@ -10,14 +10,38 @@ const SYSTEM_PROMPT = `You are an official L'Oréal product assistant. ONLY answ
 // Chat history stores the conversation (roles: 'user' | 'assistant')
 let chatHistory = [];
 
-// Seed with an initial assistant greeting
-chatHistory.push({
-  role: "assistant",
-  content:
-    "👋 Hello! I'm the L'Oréal Product Advisor — I can help with L'Oréal products, skincare and haircare routines, and recommendations. What would you like to know?",
-  // mark this seeded greeting so we can remove it after the user's first message
-  initial: true,
-});
+// Simple user profile to track name and other short facts
+let userProfile = { name: null };
+
+// Load persisted state if present (keeps context across reloads)
+// Clear persisted state on load so the chatbot restarts on refresh
+try {
+  localStorage.removeItem("chatHistory");
+  localStorage.removeItem("userProfile");
+} catch (e) {
+  console.warn("Could not clear saved chat state", e);
+}
+
+// Seed with an initial assistant greeting only when no saved history exists
+if (chatHistory.length === 0) {
+  chatHistory.push({
+    role: "assistant",
+    content:
+      "👋 Hello! I'm the L'Oréal Product Advisor — I can help with L'Oréal products, skincare and haircare routines, and recommendations. What would you like to know?",
+    // mark this seeded greeting so we can remove it after the user's first message
+    initial: true,
+  });
+}
+
+// Persist chat state
+function saveState() {
+  try {
+    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+    localStorage.setItem("userProfile", JSON.stringify(userProfile));
+  } catch (e) {
+    console.warn("Could not save chat state", e);
+  }
+}
 
 // Render the chat history into the chat window
 function escapeHtml(text) {
@@ -71,15 +95,23 @@ function renderChat() {
   });
   // keep latest visible
   chatWindow.scrollTop = chatWindow.scrollHeight;
+  // persist after rendering
+  saveState();
 }
 
 // Call OpenAI Chat Completions API with the system prompt + conversation
 async function callOpenAI() {
-  // Build messages array for the API: system prompt first, then chat history
-  const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
-    ...chatHistory.map((m) => ({ role: m.role, content: m.content })),
-  ];
+  // Build messages array for the API: system prompt first, then user profile (if any), then chat history
+  const messages = [{ role: "system", content: SYSTEM_PROMPT }];
+  if (userProfile && userProfile.name) {
+    messages.push({
+      role: "system",
+      content: `User profile: name=${userProfile.name}. Remember this for future responses and personalize when appropriate.`,
+    });
+  }
+  messages.push(
+    ...chatHistory.map((m) => ({ role: m.role, content: m.content }))
+  );
 
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -108,6 +140,7 @@ async function callOpenAI() {
     // Append assistant response to history and re-render
     chatHistory.push({ role: "assistant", content: assistantContent });
     renderChat();
+    saveState();
   } catch (err) {
     console.error(err);
     chatHistory.push({ role: "assistant", content: `Error: ${err.message}` });
@@ -124,6 +157,41 @@ chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = userInput.value.trim();
   if (!text) return;
+
+  // allow user to set their name with a shortcut: `/name YourName`
+  if (text.toLowerCase().startsWith("/name ")) {
+    const name = text.slice(6).trim();
+    if (name) {
+      userProfile.name = name;
+      // acknowledge and persist
+      chatHistory.push({
+        role: "assistant",
+        content: `Nice to meet you, ${userProfile.name}. I'll remember that for this session.`,
+      });
+      renderChat();
+      saveState();
+      userInput.value = "";
+    }
+    return;
+  }
+
+  // If we don't yet have a name for the user, ask once (optional)
+  if (!userProfile.name) {
+    try {
+      const namePrompt = prompt(
+        "Optional: what's your name? Leave empty to skip."
+      );
+      if (namePrompt && namePrompt.trim()) {
+        userProfile.name = namePrompt.trim();
+        chatHistory.push({
+          role: "assistant",
+          content: `Nice to meet you, ${userProfile.name}. I'll remember that for this session.`,
+        });
+      }
+    } catch (e) {
+      // prompt may be blocked; continue without a name
+    }
+  }
 
   // Remove the seeded initial assistant greeting (if present) so it
   // disappears once the user's message appears in the chat window.
