@@ -7,7 +7,8 @@
 
 /* —— body + fonts —— */
 body {
-  font-family: "Montserrat", Arial, Helvetica, sans-serif;
+  /* Using Helvetica to replicate L'Oreal's Helvetica Now (requires license) */
+  font-family: Helvetica, Arial, sans-serif;
   color: #000000;
   background: #ffffff;
   display: flex;
@@ -26,7 +27,9 @@ body {
 }
 
 .site-title {
-  font-size: 22px;
+  /* Using Garamond to replicate L'Oreal's Halesworth (requires license) */
+  font-family: Garamond, "Times New Roman", serif;
+  font-size: 2rem;
   font-weight: 500;
   margin-bottom: 10px;
 }
