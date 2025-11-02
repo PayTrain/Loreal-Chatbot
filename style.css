@@ -46,6 +46,23 @@ body {
   white-space: pre-line;
 }
 
+/* chat message layout */
+.chat-message {
+  margin-bottom: 14px;
+}
+
+.chat-message .message-meta {
+  margin-bottom: 6px;
+  color: #666;
+  font-size: 14px;
+}
+
+.chat-message .message-body {
+  /* ensure tight layout around text */
+  margin: 0;
+  padding: 0;
+}
+
 /* messages */
 .msg {
   margin-bottom: 14px;

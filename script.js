@@ -15,6 +15,8 @@ chatHistory.push({
   role: "assistant",
   content:
     "👋 Hello! I'm the L'Oréal Product Advisor — I can help with L'Oréal products, skincare and haircare routines, and recommendations. What would you like to know?",
+  // mark this seeded greeting so we can remove it after the user's first message
+  initial: true,
 });
 
 // Render the chat history into the chat window
@@ -26,14 +28,42 @@ function escapeHtml(text) {
 
 function renderChat() {
   chatWindow.innerHTML = "";
-  chatHistory.forEach((msg) => {
+  // Determine if we've seen any user messages yet
+  const hasUserMessage = chatHistory.some((m) => m.role === "user");
+  // Find the first assistant message index so we can selectively hide its meta
+  const firstAssistantIndex = chatHistory.findIndex(
+    (m) => m.role === "assistant"
+  );
+
+  chatHistory.forEach((msg, idx) => {
     const wrapper = document.createElement("div");
     wrapper.className = `chat-message ${msg.role}`;
     const author = msg.role === "user" ? "You" : "Advisor";
-    wrapper.innerHTML = `
-      <div class="message-meta"><strong>${author}</strong></div>
-      <div class="message-body">${escapeHtml(msg.content)}</div>
-    `;
+
+    // Hide the meta for the very first assistant message if no user message has appeared yet.
+    const hideMeta =
+      msg.role === "assistant" &&
+      idx === firstAssistantIndex &&
+      !hasUserMessage;
+
+    // Only create and append the meta element when it should be visible.
+    // Omitting the element entirely (instead of adding it with display:none)
+    // prevents stray layout space from appearing in some browsers/contexts.
+    if (!hideMeta) {
+      const meta = document.createElement("div");
+      meta.className = "message-meta";
+      const strong = document.createElement("strong");
+      strong.textContent = author;
+      meta.appendChild(strong);
+      wrapper.appendChild(meta);
+    }
+
+    // Append message body
+    const body = document.createElement("div");
+    body.className = "message-body";
+    body.innerHTML = escapeHtml(msg.content);
+    wrapper.appendChild(body);
+
     chatWindow.appendChild(wrapper);
   });
   // keep latest visible
@@ -91,6 +121,12 @@ chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const text = userInput.value.trim();
   if (!text) return;
+
+  // Remove the seeded initial assistant greeting (if present) so it 
+  // disappears once the user's message appears in the chat window.
+  chatHistory = chatHistory.filter(
+    (m) => !(m.role === "assistant" && m.initial === true)
+  );
 
   // Add user message to history and render
   chatHistory.push({ role: "user", content: text });
