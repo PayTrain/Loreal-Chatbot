@@ -154,7 +154,12 @@ function applyInlineFormatting(text) {
   return text;
 }
 
-function renderChat() {
+// Render the chat history into the chat window
+// Optional behavior: pass { scrollTo: 'lastUserTop' } to align the most recent
+// user message at the top of the chat window after rendering. By default,
+// we keep the previous behavior of scrolling to the bottom.
+function renderChat(options = {}) {
+  const { scrollTo } = options; // 'lastUserTop' | undefined
   chatWindow.innerHTML = "";
   // Determine if we've seen any user messages yet
   const hasUserMessage = chatHistory.some((m) => m.role === "user");
@@ -198,8 +203,30 @@ function renderChat() {
 
     chatWindow.appendChild(wrapper);
   });
-  // keep latest visible
-  chatWindow.scrollTop = chatWindow.scrollHeight;
+  // Scrolling behavior
+  // - When the bot's response loads, we want the user's most recent prompt to be
+  //   positioned at the top of the chat window (so the user sees their prompt
+  //   followed by the start of the bot's reply). We'll call renderChat with
+  //   { scrollTo: 'lastUserTop' } in those situations.
+  // - Otherwise, keep the default behavior of scrolling to the bottom.
+  if (scrollTo === "lastUserTop") {
+    // Find the last user message element and align it to the top of the scroll container
+    const userMessages = chatWindow.querySelectorAll(".chat-message.user");
+    const lastUser = userMessages[userMessages.length - 1];
+    if (lastUser) {
+      // Position the last user message slightly below the top of the chat window
+      // using a fixed offset for comfortable context visibility.
+      const OFFSET = 32; // tweak as desired
+      const containerRect = chatWindow.getBoundingClientRect();
+      const lastRect = lastUser.getBoundingClientRect();
+      const deltaTop = lastRect.top - containerRect.top; // distance from top of container
+      const target = Math.max(0, chatWindow.scrollTop + deltaTop - OFFSET);
+      chatWindow.scrollTop = target;
+    }
+  } else {
+    // keep latest visible at the bottom (previous behavior)
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
   // persist after rendering
   saveState();
 }
@@ -244,12 +271,15 @@ async function callOpenAI() {
       "Sorry, I did not receive a reply.";
     // Append assistant response to history and re-render
     chatHistory.push({ role: "assistant", content: assistantContent });
-    renderChat();
+    // After the assistant responds, align the latest user prompt at the top
+    // so it's easy to see your prompt followed by the start of the reply.
+    renderChat({ scrollTo: "lastUserTop" });
     saveState();
   } catch (err) {
     console.error(err);
     chatHistory.push({ role: "assistant", content: `Error: ${err.message}` });
-    renderChat();
+    // Even on error, keep the same alignment behavior for consistency
+    renderChat({ scrollTo: "lastUserTop" });
   } finally {
     userInput.disabled = false;
     sendBtn.disabled = false;
