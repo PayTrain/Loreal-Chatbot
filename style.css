@@ -77,12 +77,6 @@ main {
   font-size: 14px;
 }
 
-.chat-message .message-body {
-  /* ensure tight layout around text */
-  margin: 0;
-  padding: 0;
-}
-
 /* alignment and bubble styles */
 .chat-message.assistant {
   align-items: flex-start; /* left aligned */
@@ -93,6 +87,7 @@ main {
 }
 
 .chat-message .message-body {
+  margin: 0;
   max-width: 75%;
   padding: 10px 12px;
   border-radius: 10px;
@@ -122,20 +117,6 @@ main {
   border: none;
   color: #000000;
   border-radius: 0;
-}
-
-/* messages */
-.msg {
-  margin-bottom: 14px;
-  line-height: 1.5;
-}
-
-.msg.user {
-  color: #000;
-}
-
-.msg.ai {
-  color: #666666;
 }
 
 /* formatting for markdown-style lists and headings within messages */

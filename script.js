@@ -330,8 +330,3 @@ chatForm.addEventListener("submit", async (e) => {
 
 // Initial render
 renderChat();
-
-/*
-  Security note (display-only): This example uses `secrets.js` in the client for simplicity (the file defines `apiKey`).
-  DO NOT ship a real API key in client-side code for production. Instead, proxy requests through a server or Cloudflare Worker.
-*/
