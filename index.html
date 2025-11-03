@@ -56,6 +56,46 @@
       </footer>
     </div>
 
+    <!-- Name Modal: replaces default browser prompt with branded UI -->
+    <div id="nameModal" class="modal-overlay" aria-hidden="true">
+      <div
+        class="modal-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="nameModalTitle"
+        aria-describedby="nameModalDesc"
+      >
+        <button class="modal-close" type="button" aria-label="Close">
+          &times;
+        </button>
+        <h2 id="nameModalTitle" class="modal-title">
+          Tell us your name (optional)
+        </h2>
+        <p id="nameModalDesc" class="modal-desc">
+          Share your name so I can personalize replies. You can also skip this.
+        </p>
+        <form id="nameModalForm" class="modal-form">
+          <label for="nameInput" class="visually-hidden">Your name</label>
+          <input
+            id="nameInput"
+            type="text"
+            inputmode="text"
+            autocomplete="name"
+            placeholder="Your name (optional)"
+            maxlength="60"
+          />
+          <div class="modal-actions">
+            <button type="button" id="nameSkipBtn" class="btn btn-secondary">
+              Skip
+            </button>
+            <button type="submit" id="nameSaveBtn" class="btn btn-primary">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <script src="script.js"></script>
   </body>
 </html>

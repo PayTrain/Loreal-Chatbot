@@ -62,6 +62,45 @@ main {
   overflow-y: auto;
   background: #ffffff;
   white-space: pre-line;
+  border-radius: 10px; /* match modal rounding */
+}
+
+/* ——— chat window scrollbar styling ——— */
+/* Keep the scrollbar space stable to avoid layout shift */
+.chat-window {
+  scrollbar-gutter: stable both-edges; /* progressive enhancement */
+}
+
+/* Firefox (Gecko) */
+.chat-window {
+  scrollbar-width: thin; /* auto | thin | none */
+  scrollbar-color: #666666 transparent; /* thumb | track */
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+.chat-window::-webkit-scrollbar {
+  width: 12px; /* vertical scrollbar width */
+}
+
+.chat-window::-webkit-scrollbar-track {
+  background: transparent; /* transparent track */
+  border-radius: 10px;
+  /* Make the scrollbar slightly shorter so it doesn't get clipped by the rounded container */
+  margin: 8px 0; /* top | bottom gap */
+}
+
+.chat-window::-webkit-scrollbar-thumb {
+  background: #e3a535; /* brand gold accent */
+  border-radius: 8px;
+  border: 2px solid #f5f5f5; /* creates separation from the track */
+}
+
+.chat-window::-webkit-scrollbar-thumb:hover {
+  background: #cf922f; /* darker gold on hover */
+}
+
+.chat-window::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* chat message layout */
@@ -172,6 +211,7 @@ main {
   padding: 12px;
   border: 1px solid #ccc;
   font-size: 1rem;
+  border-radius: 8px; /* match button rounding for cohesive row */
 }
 
 .chat-form input:focus {
@@ -192,6 +232,7 @@ main {
   justify-content: center;
   cursor: pointer;
   transition: background 0.3s;
+  border-radius: 8px; /* match modal rounding */
 }
 
 .chat-form button .material-icons {
@@ -243,6 +284,125 @@ main {
 
 .site-footer a:hover {
   color: #ff003b;
+}
+
+/* ——— modal (name prompt) ——— */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* subtle dark backdrop */
+  display: none; /* hidden by default */
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.modal-overlay.show {
+  display: flex; /* reveal when active */
+}
+
+.modal-dialog {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 520px;
+  padding: 20px 20px 16px 20px;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.modal-title {
+  /* Headline style aligns with brand serif used in site title */
+  font-family: Garamond, "Times New Roman", serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.modal-desc {
+  color: #444;
+  font-size: 0.95rem;
+  margin-bottom: 14px;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-form input[type="text"] {
+  padding: 12px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  border-radius: 8px; /* align with modal buttons */
+}
+
+.modal-form input[type="text"]:focus {
+  outline: 2px solid #e3a535;
+  outline-offset: 2px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.btn {
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+}
+
+.btn:focus {
+  outline: 2px solid #e3a535;
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: #000000; /* align with user bubble brand black */
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #ffffff;
+  color: #000000;
+  border-color: #000000;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #e3a535; /* gold accent */
+  border-color: #e3a535;
+}
+
+.btn-secondary:hover {
+  background: #e3a535;
+  color: #ffffff;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #000;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:focus {
+  outline: 2px solid #e3a535;
+  outline-offset: 2px;
 }
 
 /* ————— responsive tweaks for small screens ————— */

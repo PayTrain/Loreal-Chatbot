@@ -3,6 +3,13 @@ const chatForm = document.getElementById("chatForm");
 const userInput = document.getElementById("userInput");
 const chatWindow = document.getElementById("chatWindow");
 const sendBtn = document.getElementById("sendBtn");
+// Elements for custom name modal
+const nameModal = document.getElementById("nameModal");
+const nameModalForm = document.getElementById("nameModalForm");
+const nameInputEl = document.getElementById("nameInput");
+const nameSkipBtn = document.getElementById("nameSkipBtn");
+const nameSaveBtn = document.getElementById("nameSaveBtn");
+const nameCloseBtn = document.querySelector("#nameModal .modal-close");
 
 // System prompt: assistant should ONLY answer L'Oréal product / routine / recommendation queries
 const SYSTEM_PROMPT = `You are an official L'Oréal product assistant. ONLY answer questions related to L'Oréal products, skincare and haircare routines, and product recommendations. If a user asks about non-L'Oréal products or unrelated topics, politely explain you only provide L'Oréal-specific information and offer comparable L'Oréal alternatives when possible. Ask clarifying questions about skin type, hair type, concerns, sensitivities, and budget when needed. Do not provide medical, legal, or diagnostic advice — direct users to a professional in those cases. Keep answers friendly, factual, concise, and include product names and recommended usage steps when relevant.`;
@@ -287,6 +294,81 @@ async function callOpenAI() {
   }
 }
 
+// Show the branded name modal and resolve with the entered name (string) or null if skipped/cancelled
+function openNameModal() {
+  return new Promise((resolve) => {
+    // Small helper: close + cleanup listeners
+    const cleanup = () => {
+      document.removeEventListener("keydown", onKeydown);
+      nameModalForm.removeEventListener("submit", onSubmit);
+      nameSkipBtn.removeEventListener("click", onSkip);
+      nameCloseBtn.removeEventListener("click", onSkip);
+    };
+
+    const close = () => {
+      nameModal.classList.remove("show");
+      nameModal.setAttribute("aria-hidden", "true");
+    };
+
+    const onSubmit = (e) => {
+      e.preventDefault();
+      const value = nameInputEl.value.trim();
+      cleanup();
+      close();
+      resolve(value || null);
+    };
+
+    const onSkip = () => {
+      cleanup();
+      close();
+      resolve(null);
+    };
+
+    const onKeydown = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onSkip();
+      } else if (e.key === "Tab") {
+        // simple focus trap inside the modal
+        const focusable = [
+          nameInputEl,
+          nameSkipBtn,
+          nameSaveBtn,
+          nameCloseBtn,
+        ].filter(Boolean);
+        const idx = focusable.indexOf(document.activeElement);
+        if (e.shiftKey) {
+          // backwards
+          if (idx === 0 || document.activeElement === nameModal) {
+            e.preventDefault();
+            focusable[focusable.length - 1].focus();
+          }
+        } else {
+          // forwards
+          if (idx === focusable.length - 1) {
+            e.preventDefault();
+            focusable[0].focus();
+          }
+        }
+      }
+    };
+
+    // Open modal
+    nameModal.classList.add("show");
+    nameModal.setAttribute("aria-hidden", "false");
+    // Prefill with current name if any (user might re-open in future)
+    nameInputEl.value = userProfile.name || "";
+    // Focus input for quick typing
+    setTimeout(() => nameInputEl.focus(), 0);
+
+    // Wire listeners
+    nameModalForm.addEventListener("submit", onSubmit);
+    nameSkipBtn.addEventListener("click", onSkip);
+    nameCloseBtn.addEventListener("click", onSkip);
+    document.addEventListener("keydown", onKeydown);
+  });
+}
+
 // Handle form submit
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -312,19 +394,17 @@ chatForm.addEventListener("submit", async (e) => {
 
   // If we don't yet have a name for the user, ask only once after the first prompt (optional)
   if (!userProfile.name && !hasAskedName) {
-    try {
-      const namePrompt = prompt(
-        "Optional: what's your name? Leave empty to skip."
-      );
-      if (namePrompt && namePrompt.trim()) {
-        userProfile.name = namePrompt.trim();
-        chatHistory.push({
-          role: "assistant",
-          content: `Nice to meet you, ${userProfile.name}. I'll remember that for this session.`,
-        });
-      }
-    } catch (e) {
-      // prompt may be blocked; continue without a name
+    // Open the branded modal instead of using window.prompt
+    const nameValue = await openNameModal();
+    if (nameValue) {
+      userProfile.name = nameValue;
+      // acknowledge and persist
+      chatHistory.push({
+        role: "assistant",
+        content: `Nice to meet you, ${userProfile.name}. I'll remember that for this session.`,
+      });
+      renderChat();
+      saveState();
     }
     // Ensure we only ask once per session, even if the user skipped entering a name
     hasAskedName = true;
