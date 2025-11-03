@@ -346,12 +346,19 @@ chatForm.addEventListener("submit", async (e) => {
   sendBtn.disabled = true;
 
   // Show a brief typing indicator while we wait
-  chatHistory.push({ role: "assistant", content: "Thinking..." });
+  chatHistory.push({
+    role: "assistant",
+    content: "Preparing a *fabulous* response just for you...",
+  });
   renderChat();
 
   // Remove the temporary 'Thinking...' before calling the API
   chatHistory = chatHistory.filter(
-    (m) => !(m.role === "assistant" && m.content === "Thinking...")
+    (m) =>
+      !(
+        m.role === "assistant" &&
+        m.content === "Preparing a *fabulous* response just for you..."
+      )
   );
 
   // Call the API and handle response
