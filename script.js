@@ -7,6 +7,9 @@ const sendBtn = document.getElementById("sendBtn");
 // System prompt: assistant should ONLY answer L'Oréal product / routine / recommendation queries
 const SYSTEM_PROMPT = `You are an official L'Oréal product assistant. ONLY answer questions related to L'Oréal products, skincare and haircare routines, and product recommendations. If a user asks about non-L'Oréal products or unrelated topics, politely explain you only provide L'Oréal-specific information and offer comparable L'Oréal alternatives when possible. Ask clarifying questions about skin type, hair type, concerns, sensitivities, and budget when needed. Do not provide medical, legal, or diagnostic advice — direct users to a professional in those cases. Keep answers friendly, factual, concise, and include product names and recommended usage steps when relevant.`;
 
+// Cloudflare Worker endpoint (proxy to OpenAI) — client should NOT send the OpenAI API key
+const WORKER_URL = "https://loreal-chatbot-worker.pmackmurphy.workers.dev/";
+
 // Chat history stores the conversation (roles: 'user' | 'assistant')
 let chatHistory = [];
 
@@ -50,6 +53,31 @@ function escapeHtml(text) {
   return p.innerHTML;
 }
 
+// Convert lightweight markdown-style markers into safe HTML.
+// This function first escapes any HTML in the input (preventing XSS),
+// then replaces **bold** markers with <strong>...</strong> while keeping
+// the interior text already escaped.
+function formatMessage(text) {
+  if (!text) return "";
+  // Escape all HTML first
+  let safe = escapeHtml(text);
+  // Bold: **text**
+  safe = safe.replace(/\*\*(.+?)\*\*/gs, (match, p1) => {
+    return `<strong>${p1}</strong>`;
+  });
+  // Italics: *text* or _text_ (not inside bold)
+  // Avoid matching inside <strong>...</strong>
+  // First, single asterisks: *text*
+  safe = safe.replace(/(?<!\*)\*(?!\*)([^*]+?)\*(?!\*)/gs, (match, p1) => {
+    return `<em>${p1}</em>`;
+  });
+  // Then, single underscores: _text_
+  safe = safe.replace(/(?<!_)_(?!_)([^_]+?)_(?!_)/gs, (match, p1) => {
+    return `<em>${p1}</em>`;
+  });
+  return safe;
+}
+
 function renderChat() {
   chatWindow.innerHTML = "";
   // Determine if we've seen any user messages yet
@@ -88,7 +116,8 @@ function renderChat() {
     // Append message body
     const body = document.createElement("div");
     body.className = "message-body";
-    body.innerHTML = escapeHtml(msg.content);
+    // Format the message: escape any HTML and apply lightweight **bold** markup.
+    body.innerHTML = formatMessage(msg.content);
     wrapper.appendChild(body);
 
     chatWindow.appendChild(wrapper);
@@ -114,11 +143,11 @@ async function callOpenAI() {
   );
 
   try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Send request to the Cloudflare Worker which proxies to OpenAI and keeps the API key server-side.
+    const res = await fetch(WORKER_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: "gpt-4o",
@@ -130,7 +159,7 @@ async function callOpenAI() {
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`OpenAI API error: ${res.status} ${text}`);
+      throw new Error(`Worker proxy error: ${res.status} ${text}`);
     }
 
     const data = await res.json();

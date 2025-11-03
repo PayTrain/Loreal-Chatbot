@@ -222,3 +222,16 @@ main {
 .site-footer a:hover {
   color: #ff003b;
 }
+
+/* ————— responsive tweaks for small screens ————— */
+@media (max-width: 575.98px) {
+  /* add extra space above the logo */
+  .site-header {
+    padding-top: 3rem;
+  }
+
+  /* reduce the logo size */
+  .logo {
+    width: 7rem;
+  }
+}
