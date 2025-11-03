@@ -15,6 +15,8 @@ let chatHistory = [];
 
 // Simple user profile to track name and other short facts
 let userProfile = { name: null };
+// Track whether we've already asked for the user's name this session
+let hasAskedName = false;
 
 // Load persisted state if present (keeps context across reloads)
 // Clear persisted state on load so the chatbot restarts on refresh
@@ -54,28 +56,102 @@ function escapeHtml(text) {
 }
 
 // Convert lightweight markdown-style markers into safe HTML.
+// Supports: headings (# through ######), bold (**text**), italics (*text* or _text_),
+// and bullet lists (lines starting with -, *, or +).
 // This function first escapes any HTML in the input (preventing XSS),
-// then replaces **bold** markers with <strong>...</strong> while keeping
-// the interior text already escaped.
+// then applies formatting while keeping the interior text already escaped.
 function formatMessage(text) {
   if (!text) return "";
   // Escape all HTML first
   let safe = escapeHtml(text);
+
+  // Process line by line to handle headings, lists, and formatting
+  const lines = safe.split(/\r?\n/);
+  let formatted = "";
+  let inList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i];
+
+    // Check for headings (# through ######)
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      // Close any open list
+      if (inList) {
+        formatted += "</ul>";
+        inList = false;
+      }
+      const level = headingMatch[1].length;
+      let headingText = headingMatch[2];
+      // Apply bold/italic formatting inside headings
+      headingText = applyInlineFormatting(headingText);
+      formatted += `<h${level}>${headingText}</h${level}>`;
+      continue;
+    }
+
+    // Check for bullet lists (-, *, or + followed by space)
+    const bulletMatch = line.match(/^\s*([-*+])\s+(.*)$/);
+    if (bulletMatch) {
+      if (!inList) {
+        formatted += "<ul>";
+        inList = true;
+      }
+      let item = bulletMatch[2];
+      item = applyInlineFormatting(item);
+      formatted += `<li>${item}</li>`;
+      continue;
+    }
+
+    // Regular line - close list if open
+    if (inList) {
+      formatted += "</ul>";
+      inList = false;
+    }
+
+    // Apply inline formatting to regular lines
+    line = applyInlineFormatting(line);
+    formatted += line;
+
+    // Add line breaks between non-empty lines (but not after last line)
+    if (i < lines.length - 1) {
+      const nextLine = lines[i + 1];
+      // Don't add <br> if next line is a heading or bullet, or current/next is empty
+      const nextIsHeading = /^#{1,6}\s+/.test(nextLine);
+      const nextIsBullet = /^\s*[-*+]\s+/.test(nextLine);
+      const currentIsEmpty = line.trim() === "";
+      const nextIsEmpty = nextLine.trim() === "";
+
+      if (!nextIsHeading && !nextIsBullet && !currentIsEmpty && !nextIsEmpty) {
+        formatted += "<br>";
+      } else if (currentIsEmpty || nextIsEmpty) {
+        formatted += "<br>";
+      }
+    }
+  }
+
+  // Close list if still open at end
+  if (inList) {
+    formatted += "</ul>";
+  }
+
+  return formatted;
+}
+
+// Helper function to apply inline formatting (bold and italic)
+function applyInlineFormatting(text) {
   // Bold: **text**
-  safe = safe.replace(/\*\*(.+?)\*\*/gs, (match, p1) => {
+  text = text.replace(/\*\*(.+?)\*\*/g, (match, p1) => {
     return `<strong>${p1}</strong>`;
   });
-  // Italics: *text* or _text_ (not inside bold)
-  // Avoid matching inside <strong>...</strong>
-  // First, single asterisks: *text*
-  safe = safe.replace(/(?<!\*)\*(?!\*)([^*]+?)\*(?!\*)/gs, (match, p1) => {
+  // Italics with single asterisks: *text* (not part of **)
+  text = text.replace(/(?<!\*)\*(?!\*)([^*]+?)\*(?!\*)/g, (match, p1) => {
     return `<em>${p1}</em>`;
   });
-  // Then, single underscores: _text_
-  safe = safe.replace(/(?<!_)_(?!_)([^_]+?)_(?!_)/gs, (match, p1) => {
+  // Italics with underscores: _text_
+  text = text.replace(/(?<!_)_(?!_)([^_]+?)_(?!_)/g, (match, p1) => {
     return `<em>${p1}</em>`;
   });
-  return safe;
+  return text;
 }
 
 function renderChat() {
@@ -153,7 +229,7 @@ async function callOpenAI() {
         model: "gpt-4o",
         messages,
         temperature: 0.7,
-        max_tokens: 800,
+        max_tokens: 1000,
       }),
     });
 
@@ -204,8 +280,8 @@ chatForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  // If we don't yet have a name for the user, ask once (optional)
-  if (!userProfile.name) {
+  // If we don't yet have a name for the user, ask only once after the first prompt (optional)
+  if (!userProfile.name && !hasAskedName) {
     try {
       const namePrompt = prompt(
         "Optional: what's your name? Leave empty to skip."
@@ -220,6 +296,8 @@ chatForm.addEventListener("submit", async (e) => {
     } catch (e) {
       // prompt may be blocked; continue without a name
     }
+    // Ensure we only ask once per session, even if the user skipped entering a name
+    hasAskedName = true;
   }
 
   // Remove the seeded initial assistant greeting (if present) so it

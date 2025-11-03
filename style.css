@@ -138,6 +138,47 @@ main {
   color: #666666;
 }
 
+/* formatting for markdown-style lists and headings within messages */
+.message-body ul {
+  margin: 0.5rem 0;
+  padding-left: 2.05rem;
+  list-style-type: disc;
+}
+
+.message-body li {
+  margin-bottom: 0.25rem;
+  line-height: 1.6;
+}
+
+.message-body h1,
+.message-body h2,
+.message-body h3,
+.message-body h4,
+.message-body h5,
+.message-body h6 {
+  margin: 0.75rem 0 0.5rem 0;
+  font-weight: 600;
+}
+
+.message-body h1 {
+  font-size: 1.5rem;
+}
+.message-body h2 {
+  font-size: 1.3rem;
+}
+.message-body h3 {
+  font-size: 1.15rem;
+}
+.message-body h4 {
+  font-size: 1rem;
+}
+.message-body h5 {
+  font-size: 0.95rem;
+}
+.message-body h6 {
+  font-size: 0.9rem;
+}
+
 /* input row */
 .chat-form {
   display: flex;
